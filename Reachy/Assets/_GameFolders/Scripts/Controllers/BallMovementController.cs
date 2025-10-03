@@ -1,5 +1,5 @@
-﻿using System;
-using _GameFolders.Scripts.Managers;
+﻿using _GameFolders.Scripts.Managers;
+using _GameFolders.Scripts.Objects;
 using UnityEngine;
 
 namespace _GameFolders.Scripts.Controllers
@@ -16,34 +16,46 @@ namespace _GameFolders.Scripts.Controllers
         private void OnEnable()
         {
             _canMove = false;
-            GameEventManager.OnPathMovementCompleted += ()=> _canMove = true;
-        }
-        private void OnDisable()
-        {
-            GameEventManager.OnPathMovementCompleted -= ()=> _canMove = true;
+            GameEventManager.OnPathRotateCompleted += StartMovement;
         }
 
         private void FixedUpdate()
-        {
+        { 
             if (_canMove)
             {
-                MoveBallForward();
+                StartMovement();
             }
         }
 
-        private void OnCollisionEnter(Collision other)
+        private void OnTriggerEnter(Collider other)
         {
-            if (other.gameObject.CompareTag("Path"))
+            if (other.CompareTag("NextPlatform"))
             {
                 _canMove = false;
-                _rb.isKinematic = true;
-                Debug.Log("Movement Stopped");
+                Platform platform = other.GetComponent<Platform>();
+                platform.enabled = true;
+                StopMovement();
             }
         }
 
-        private void MoveBallForward()
+        private void OnDisable()
         {
-            transform.position += transform.forward * (moveSpeed * Time.fixedDeltaTime);                   
+            GameEventManager.OnPathRotateCompleted -= StartMovement;
+        }
+
+        private void StartMovement()
+        {
+            _canMove = true;
+            _rb.isKinematic = false;
+            _rb.linearVelocity = new Vector3(_rb.linearVelocity.x,_rb.linearVelocity.y,moveSpeed);
+        }
+
+        private void StopMovement()
+        {
+            _canMove = false;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+            _rb.isKinematic = true;
         }
     }
 }

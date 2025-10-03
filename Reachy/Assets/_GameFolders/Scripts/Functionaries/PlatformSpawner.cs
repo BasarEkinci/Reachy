@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using _GameFolders.Scripts.Objects;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -20,16 +18,17 @@ namespace _GameFolders.Scripts.Functionaries
 
         private Vector3 _lastSpawnPosition = Vector3.zero;
         private List<GameObject> _spawnedPlatforms = new List<GameObject>();
+        
         private void Start()
         {
             for (int i = 0; i < 2; i++)
             {
                 _lastSpawnPosition = CreateRandomPosition(_lastSpawnPosition);
-                Debug.Log("Spawned at: " + _lastSpawnPosition);
                 GameObject platform = Instantiate(platformPrefab, _lastSpawnPosition, Quaternion.identity);
                 _spawnedPlatforms.Add(platform);
             }
-            _spawnedPlatforms[0].gameObject.tag = "NextPlatform";
+            _spawnedPlatforms[0].tag = "NextPlatform";
+            _spawnedPlatforms[0].transform.GetChild(0).tag = "NextPlatform";
         }
 
         private Vector3 CreateRandomPosition(Vector3 lastPosition)
