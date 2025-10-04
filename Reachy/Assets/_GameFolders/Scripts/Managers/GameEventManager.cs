@@ -1,5 +1,6 @@
 ﻿using System;
 using _GameFolders.Scripts.Controllers;
+using _GameFolders.Scripts.Objects;
 
 namespace _GameFolders.Scripts.Managers
 {
@@ -7,8 +8,18 @@ namespace _GameFolders.Scripts.Managers
     {
         public static event Action OnLineGrowCompleted;
         public static event Action OnLineRotateCompleted;
-        public static event Action<PlatformController> OnCurrentPlatformChanged;
+        public static event Action<Platform> OnCurrentPlatformChanged;
+        public static event Action OnBallMoveCompleted;
+        public static event Action OnGameOver;
         
+        public static void RaiseGameOver()
+        {
+            OnGameOver?.Invoke();
+        }
+        public static void RaiseBallMoveCompleted()
+        {
+            OnBallMoveCompleted?.Invoke();
+        }
         public static void RaiseLineRotateCompleted()
         {
             OnLineRotateCompleted?.Invoke();
@@ -24,7 +35,7 @@ namespace _GameFolders.Scripts.Managers
         /// </summary>
         /// <param name="current">The platform that ball stays</param>
         /// <param name="next">The platform that next to current</param>
-        public static void RaiseCurrentPlatformChanged(PlatformController current)
+        public static void RaiseCurrentPlatformChanged(Platform current)
         {
             OnCurrentPlatformChanged?.Invoke(current);
         }

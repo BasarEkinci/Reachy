@@ -5,8 +5,9 @@ TagManager:
   serializedVersion: 3
   tags:
   - Platform
-  - NextPlatform
   - Path
+  - PlatformBound
+  - BallTargetPoint
   layers:
   - Default
   - TransparentFX

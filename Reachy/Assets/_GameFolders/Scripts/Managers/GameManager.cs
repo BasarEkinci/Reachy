@@ -2,119 +2,111 @@
 using _GameFolders.Scripts.Functionaries;
 using _GameFolders.Scripts.Inputs;
 using UnityEngine;
-using static _GameFolders.Scripts.Managers.GameEventManager;
-
 
 namespace _GameFolders.Scripts.Managers
 {
     public class GameManager : MonoBehaviour
     {
         [Header("Platform Settings")]
-        [SerializeField] private float rotateTimer;
-        [SerializeField] private float rotateAngle;
-        [SerializeField] private float growAmount = 5f;
+        [SerializeField] private float platformGrowAmount = 1f;
+        [SerializeField] private float platformRotateAngle = 90f;
+        
+        [Header("Ball Settings")]
+        [SerializeField] private float ballMoveSpeed = 5f;
         
         [Header("References")]
+        [SerializeField] private PlatformHandler platformHandler;
         [SerializeField] private BallMovementController ball;
-        [SerializeField] private PlatformSpawner platformSpawner;
-
-        private enum PlatformLineState
-        {
-            Idle,
-            Growing,
-            Rotating
-        }
         
-        private PlatformController _currentPlatform;
-        private PlatformController _nextPlatform;
-        private PlatformLineState _currentState;
-
-        private float _timeAmount;
-        private bool _canMove;
-
-        private void Start()
+        private enum GameState
         {
-            _canMove = true;
+            LineGrowing,
+            LineRotating,
+            BallMoving,
+            BallIdle,
+            GameOver
         }
 
+        private float _timer;
+        private bool _canGrow;
+        private GameState _currentState;
+        
         private void OnEnable()
         {
-            OnCurrentPlatformChanged += CurrentPlatformChanged;
-            OnLineRotateCompleted += ball.MoveNextPlatform;
-            OnLineGrowCompleted += LineGrowCompletedHandler;
+            GameEventManager.OnLineRotateCompleted += HandleLineRotateCompleted;
+            GameEventManager.OnBallMoveCompleted += HandleBallMoveCompleted;
+            GameEventManager.OnGameOver += HandleGameOver;
+            _currentState = GameState.BallIdle;
+            _canGrow = true;
+        }
+
+        private void HandleBallMoveCompleted()
+        {
+            _currentState = GameState.BallIdle;
+            platformHandler.ChangeCurrentPlatform();
+            ball.SetTargetPoint(platformHandler.NextPlatform.BallTargetPoint.position);
+        }
+
+        private void OnDisable()
+        {
+            GameEventManager.OnLineRotateCompleted -= HandleLineRotateCompleted;
+            GameEventManager.OnBallMoveCompleted -= HandleBallMoveCompleted;
+            GameEventManager.OnGameOver -= HandleGameOver;
+        }
+
+        private void HandleGameOver()
+        {
+            _currentState = GameState.GameOver;
+        }
+
+        private void HandleLineRotateCompleted()
+        {
+            ball.SetTargetPoint(platformHandler.NextPlatform.BallTargetPoint.position);
+            _currentState = GameState.BallMoving;
         }
 
         private void Update()
         {
             HandleInput();
-            HandlePlatformLineState();
-        }
-        
-        private void OnDisable()
-        {
-            OnCurrentPlatformChanged -= CurrentPlatformChanged;
-            OnLineRotateCompleted -= ball.MoveNextPlatform;
-            OnLineGrowCompleted -= LineGrowCompletedHandler;
+            HandleGameState();
         }
 
-        private void LineGrowCompletedHandler()
-        {
-            _currentState = PlatformLineState.Rotating;
-        }
         private void HandleInput()
         {
-            Debug.Log("Can Move: " + _canMove);
-            if (_canMove)
+            if (_canGrow)
             {
                 if (InputManager.Instance.IsPressed())
                 {
-                    _currentState = PlatformLineState.Growing;
-                    Debug.Log("Pressed");
+                    _currentState = GameState.LineGrowing;
                 }
-
                 if (InputManager.Instance.WasReleasedThisFrame())
-                {
-                    _currentState = PlatformLineState.Rotating;
-                    Debug.Log("Released");
-                    _canMove = false;
-                }
+                { 
+                    _currentState = GameState.LineRotating;
+                }    
             }
         }
-        
-        private void HandlePlatformLineState()
+
+        private void HandleGameState()
         {
             switch (_currentState)
             {
-                case PlatformLineState.Growing:
-                    _currentPlatform.PlatformLine.GrowPlatform(growAmount);
+                case GameState.LineGrowing:
+                    platformHandler.CurrentPlatform.PlatformLine.GrowPlatform(platformGrowAmount);
                     break;
-                case PlatformLineState.Rotating:
-                    _timeAmount += Time.deltaTime;
-                    _currentPlatform.PlatformLine.RotatePlatform(rotateAngle * Time.deltaTime);
-                    if (_timeAmount >= rotateTimer)
-                    {
-                        _currentState = PlatformLineState.Idle;
-                        _timeAmount = 0f;
-                    }
+                case GameState.LineRotating:
+                    platformHandler.CurrentPlatform.PlatformLine.RotatePlatform(platformRotateAngle);
+                    _canGrow = false;
+                    break;
+                case GameState.BallMoving:
+                    _canGrow = false;
+                    break;
+                case GameState.BallIdle:
+                    _canGrow = true;
+                    break;
+                case GameState.GameOver:
+                    _canGrow = false;
                     break;
             }
-        }
-        
-        private void CurrentPlatformChanged(PlatformController current)
-        {
-            if (_currentPlatform != null)
-            {
-                _currentPlatform.ResetThis();
-            }
-            _currentPlatform = current;
-            _currentPlatform.SetThisAsCurrent();
-            int nextPlatformIndex = platformSpawner.Platforms.IndexOf(current);
-            _nextPlatform = platformSpawner.Platforms[nextPlatformIndex];
-            _currentPlatform.PlatformLine.Activate();
-            ball.SetTargetPoint(_nextPlatform.BallTargetPoint);
-            _canMove = true;
-            _timeAmount = 0f;
-            _currentState = PlatformLineState.Idle;
         }
     }
 }
