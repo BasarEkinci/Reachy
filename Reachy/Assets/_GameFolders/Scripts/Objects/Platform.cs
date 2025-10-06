@@ -1,47 +1,54 @@
-using _GameFolders.Scripts.Controllers;
+using System;
+using DG.Tweening;
 using UnityEngine;
 
 namespace _GameFolders.Scripts.Objects
 {
     public class Platform : MonoBehaviour
     {
-        [SerializeField] private PlatformLineController platformLine;
-        [SerializeField] private Transform ballTargetPoint;
-        [SerializeField] private GameObject bounds;
-        public bool IsNext => _isNext;
-        public bool IsCurrent => _isCurrent;
+        public Transform Line => line;
         public Transform BallTargetPoint => ballTargetPoint;
-        public PlatformLineController PlatformLine => platformLine;
-
+        public bool IsCurrent => _isCurrent;
+        
+        [Header("Settings")] 
+        [SerializeField] private float lineGrowAmount;
+        [SerializeField] private float lineMaxScale;
+        [SerializeField] private float lineMinScale;
+        [SerializeField] private float lineRotateAngle;
+        
+        [Header("References")]
+        [SerializeField] private Transform line;
+        [SerializeField] private Transform ballTargetPoint;
+        [SerializeField] private Transform platformBound;
+        
+        private int _lineGrowMultiplier;
         private bool _isCurrent;
-        private bool _isNext;
+
         private void OnEnable()
         {
-            _isCurrent = false;
-            platformLine.gameObject.SetActive(false);
-            bounds.SetActive(false);
-            ballTargetPoint.gameObject.SetActive(false);
+            SetActive(false);
         }
-        
-        internal void SetThisAsCurrent()
+
+        internal void SetActive(bool isActive)
         {
-            _isNext = false;
-            _isCurrent = true;
-            platformLine.gameObject.SetActive(true);
-            ballTargetPoint.gameObject.SetActive(false);
-            bounds.SetActive(false);
+            _isCurrent = isActive;
+            ballTargetPoint.gameObject.SetActive(!isActive);
+            line.gameObject.SetActive(isActive);
+            ballTargetPoint.gameObject.SetActive(!isActive);
         }
-        internal void SetThisAsNext()
+
+        internal void GrowLine()
         {
-            _isCurrent = false;
-            _isNext = true;
-            ballTargetPoint.gameObject.SetActive(true);
-            bounds.SetActive(true);
+            if (line.localScale.z >= lineMaxScale)
+                _lineGrowMultiplier = -1;
+            else if (line.localScale.z <= lineMinScale)
+                _lineGrowMultiplier = 1;
+            line.localScale += Vector3.forward * (_lineGrowMultiplier * Time.deltaTime * lineGrowAmount);
         }
-        internal void ResetThis()
+
+        internal void RotateLine()
         {
-            _isCurrent = false;
-            _isNext = false;
+            line.Rotate(Vector3.right * (lineRotateAngle * Time.deltaTime));
         }
     }
 }

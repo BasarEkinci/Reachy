@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using _GameFolders.Scripts.Controllers;
 using _GameFolders.Scripts.Managers;
 using _GameFolders.Scripts.Objects;
 using UnityEngine;
@@ -14,14 +13,15 @@ namespace _GameFolders.Scripts.Functionaries
         [Header("Spawn Settings")]
         [SerializeField] private float maxZ = 3.5f;
         [SerializeField] private float minZ = 1.5f;
-        [SerializeField] private float maxY = 2f;
-        [SerializeField] private float minY = 0f;
+        [SerializeField] private float maxY = 2.5f;
+        [SerializeField] private float minY = 1f;
         [SerializeField] private int maxPlatformCount = 10;
+        
         [Header("References")]
         [SerializeField] private Platform platformPrefab;
 
         private Vector3 _lastSpawnPosition = Vector3.zero;
-        private List<Platform> _spawnedPlatforms;
+        private List<Platform> _spawnedPlatforms = new List<Platform>();
         
         private void Start()
         {
@@ -32,6 +32,7 @@ namespace _GameFolders.Scripts.Functionaries
                 _spawnedPlatforms.Add(platform);
                 _lastSpawnPosition = CreateRandomPosition(_lastSpawnPosition);
             }
+            GameEventManager.RaiseCurrentPlatformChanged(_spawnedPlatforms[0]);
         }
 
         private Vector3 CreateRandomPosition(Vector3 lastPosition)
