@@ -8,25 +8,50 @@ namespace _GameFolders.Scripts.Managers
     {
         private Platform _currentPlatform;
 
-        private enum PlatformState { Idle, Growing, Rotating }
+        private enum PlatformState { Idle, Growing, Rotating,Default }
         private PlatformState _currentPlatformState;
         private bool _canPlatformMove;
-
+        private bool _isGameStarted;
         private void Start()
         {
-            _currentPlatformState = PlatformState.Idle;
+            _currentPlatformState = PlatformState.Default;
+            _canPlatformMove = false;
+            _isGameStarted = false;
         }
 
         private void OnEnable()
         {
             GameEventManager.OnCurrentPlatformChanged += HandlePlatformChanged;
             GameEventManager.OnLineMoveCompleted += HandleLineMoveCompleted;
+            GameEventManager.OnGameStart += HandleGameStart;
+            GameEventManager.OnGameOver += HandleGameOver;
         }
 
         private void OnDisable()
         {
             GameEventManager.OnCurrentPlatformChanged -= HandlePlatformChanged;
             GameEventManager.OnLineMoveCompleted -= HandleLineMoveCompleted;
+            GameEventManager.OnGameStart -= HandleGameStart;
+            GameEventManager.OnGameOver -= HandleGameOver;
+        }
+
+        private void Update()
+        {
+            if (!_isGameStarted) return;
+            HandlePlatformState();
+        }
+
+        private void HandleGameOver()
+        {
+            _currentPlatformState =  PlatformState.Default; 
+            _canPlatformMove = false;
+            _isGameStarted = false;
+        }
+
+        private void HandleGameStart()
+        {
+            _isGameStarted = true;
+            Debug.Log("Game Started");
         }
 
         private void HandleLineMoveCompleted()
@@ -34,13 +59,6 @@ namespace _GameFolders.Scripts.Managers
             _canPlatformMove = false;
             _currentPlatformState = PlatformState.Idle;
         }
-
-        private void Update()
-        {
-            HandlePlatformState();
-        }
-
-
         private void HandlePlatformState()
         {
             if (_canPlatformMove)
@@ -64,14 +82,14 @@ namespace _GameFolders.Scripts.Managers
                     _canPlatformMove = false;
                     if (_currentPlatform.Line.localRotation.x >= 0f)
                     {
-                        _currentPlatformState = PlatformState.Idle;
+                        _currentPlatformState = PlatformState.Default;
                         GameEventManager.RaiseGameOver();
-                        Debug.Log("Can not reach next platform. Game Over!");
                     }
+                    break;
+                case PlatformState.Default:
                     break;
             }
         }
-        
         private void HandlePlatformChanged(Platform platform)
         {
             _currentPlatform = platform;
